@@ -1,0 +1,68 @@
+/* === ESTILOS DEL HEADER PRINCIPAL === */
+
+.main-header {
+  background-color: var(--color-superficie);
+  box-shadow: var(--sombra);
+  padding: 0 5%;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+}
+
+.main-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 70px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.nav-logo h1 {
+  font-size: 1.8rem;
+  color: var(--color-primario);
+  font-weight: 700;
+}
+
+.nav-logo h1:hover {
+  opacity: 0.8;
+}
+
+.nav-carrito {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 10px 15px;
+  border-radius: var(--radio-borde);
+  transition: background-color 0.3s ease;
+}
+
+.nav-carrito:hover {
+  background-color: #f0eaf6; /* Un lila muy claro */
+}
+
+.nav-carrito span {
+  font-size: 1.2rem;
+}
+
+.carrito-contador {
+  background-color: var(--color-peligro);
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.main-content {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 5%;
+}

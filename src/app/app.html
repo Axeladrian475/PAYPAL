@@ -1,0 +1,17 @@
+<header class="main-header">
+  <nav class="main-nav">
+    <a routerLink="/catalogo" class="nav-logo">
+      <h1>Fraganza 🌺</h1>
+    </a>
+    <a routerLink="/carrito" class="nav-carrito">
+      <span>🛒 Carrito</span>
+      <span class="carrito-contador" *ngIf="cantidadEnCarrito() > 0">
+        {{ cantidadEnCarrito() }}
+      </span>
+    </a>
+  </nav>
+</header>
+
+<main class="main-content">
+  <router-outlet></router-outlet>
+</main>
