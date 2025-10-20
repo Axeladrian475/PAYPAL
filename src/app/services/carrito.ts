@@ -1,22 +1,22 @@
 import { Injectable, signal } from '@angular/core';
 import { Product } from '../models/product';
 
+// Definimos una interfaz para los productos agrupados con cantidad
+interface ProductoConCantidad {
+  producto: Product;
+  cantidad: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CarritoService {
-  // Signal con la lista de productos en el carrito
   private productosSignal = signal<Product[]>([]);
-
-  // Exponer el carrito como readonly
   productos = this.productosSignal.asReadonly();
 
   agregar(producto: Product) {
-    // === LA SOLUCIÓN ESTÁ AQUÍ ===
-    // Creamos una copia del producto, convirtiendo el precio a un número
     const productoCorregido = {
       ...producto,
-      precio: Number(producto.precio) // Aseguramos que el precio sea numérico
+      precio: Number(producto.precio)
     };
-    // Agregamos la copia corregida a la lista
     this.productosSignal.update(lista => [...lista, productoCorregido]);
   }
 
@@ -31,14 +31,12 @@ export class CarritoService {
   }
 
   total() {
-    // Ahora esta suma funcionará correctamente porque los precios son numéricos
     return this.productosSignal().reduce((acc, p) => acc + p.precio, 0);
   }
 
-  // Este método se mantiene igual, tu componente lo necesita
-  obtenerProductosConCantidad() {
+  obtenerProductosConCantidad(): ProductoConCantidad[] {
     const productos = this.productosSignal();
-    const productosConCantidad: { [id: number]: { producto: Product, cantidad: number } } = {};
+    const productosConCantidad: { [id: number]: ProductoConCantidad } = {};
 
     productos.forEach(p => {
       if (productosConCantidad[p.id]) {
@@ -51,13 +49,18 @@ export class CarritoService {
     return Object.values(productosConCantidad);
   }
 
-  exportarXML() {
-    const productos = this.obtenerProductosConCantidad();
+  // === MÉTODO MODIFICADO ===
+  // Ahora acepta los datos del pedido como argumentos para ser más reutilizable
+  exportarXML(
+    productos: ProductoConCantidad[],
+    totalPedido: number,
+    transaccionId: string // Añadimos el ID de la transacción
+  ) {
     const fecha = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
     const hora = new Date().toLocaleTimeString('es-MX');
 
-    // Generar estructura XML manualmente
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<recibo>\n`;
+    xml += `  <transaccion_id>${transaccionId}</transaccion_id>\n`; // <-- Se añade el ID de PayPal
     xml += `  <fecha>${fecha}</fecha>\n`;
     xml += `  <hora>${hora}</hora>\n`;
     xml += `  <tienda>Fraganza - Perfumería</tienda>\n`;
@@ -71,31 +74,26 @@ export class CarritoService {
       xml += `      <descripcion>${this.escapeXML(p.descripcion)}</descripcion>\n`;
       xml += `      <precio_unitario>${p.precio}</precio_unitario>\n`;
       xml += `      <cantidad>${item.cantidad}</cantidad>\n`;
-      // La multiplicación del subtotal también será correcta ahora
       xml += `      <subtotal>${p.precio * item.cantidad}</subtotal>\n`;
       xml += `    </producto>\n`;
     }
 
     xml += `  </productos>\n`;
-    xml += `  <total>${this.total()}</total>\n`;
-    xml += `  <productos_totales>${this.productosSignal().length}</productos_totales>\n`;
+    xml += `  <total>${totalPedido}</total>\n`;
+    xml += `  <productos_totales>${productos.reduce((sum, item) => sum + item.cantidad, 0)}</productos_totales>\n`;
     xml += `</recibo>`;
 
-    // Crear un Blob con el contenido XML
     const blob = new Blob([xml], { type: 'application/xml' });
     const url = URL.createObjectURL(blob);
 
-    // Crear un enlace para forzar la descarga
     const a = document.createElement('a');
     a.href = url;
-    a.download = `recibo_fraganza_${fecha}.xml`;
+    a.download = `recibo_fraganza_${transaccionId}.xml`; // El nombre ahora incluye el ID
     a.click();
 
-    // Liberar memoria
     URL.revokeObjectURL(url);
   }
 
-  // Escapar caracteres especiales XML
   private escapeXML(text: string): string {
     return text
       .replace(/&/g, '&amp;')
