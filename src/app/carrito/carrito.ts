@@ -17,8 +17,12 @@ export class CarritoComponent implements OnInit {
   private http = inject(HttpClient);
 
   carrito = this.carritoService.productos;
-  total = computed(() => this.carritoService.total());
   productosConCantidad = computed(() => this.carritoService.obtenerProductosConCantidad());
+  
+  
+  subtotal = computed(() => this.carritoService.subtotal());
+  iva = computed(() => this.carritoService.iva());
+  total = computed(() => this.carritoService.total());
 
   public payPalConfig?: any;
 
@@ -31,29 +35,39 @@ export class CarritoComponent implements OnInit {
       currency: 'MXN',
       clientId: 'Aa926d9SPXMrJB-1NmJWP6NjQyvTR2IRX-ed39gGa29inrex5dDeV8Evk2VsBYZpMWnu2OxC2uPMdGAu',
       createOrderOnServer: (data: any) => {
-        return this.http.post<{ id: string }>('http://localhost:4000/api/orders/create-order', {
-          total: this.total()
-        }).toPromise().then(order => {
-          if (order) return order.id;
-          throw new Error("No se pudo obtener el ID de la orden del servidor.");
-        });
+        const body = {
+          productos: this.productosConCantidad()
+        };
+        // Nota: El backend recalculará el total con IVA por seguridad
+        return this.http.post<{ id: string }>('http://localhost:4000/api/orders/create-order', body)
+          .toPromise()
+          .then(order => {
+            if (order) return order.id;
+            throw new Error("No se pudo obtener el ID de la orden del servidor.");
+          })
+          .catch(err => {
+            alert(`Error al crear la orden: ${err.error}`);
+            throw err;
+          });
       },
       onApprove: (data: IOnApproveCallbackData, actions: any) => {
-        console.log('onApprove - transaction was approved, but not authorized', data, actions);
-        this.http.post('http://localhost:4000/api/orders/capture-order', {
-          orderID: data.orderID
-        }).subscribe({
+        const body = {
+          orderID: data.orderID,
+          productos: this.productosConCantidad()
+        };
+        this.http.post('http://localhost:4000/api/orders/capture-order', body).subscribe({
           next: (details: any) => {
             alert('¡Pago completado con éxito! Gracias por tu compra. Se descargará tu recibo.');
 
-            // 1. Obtenemos los datos del carrito ANTES de vaciarlo
+            // Obtenemos los datos ANTES de vaciar el carrito
             const productosParaRecibo = this.productosConCantidad();
-            const totalParaRecibo = this.total();
+            const subtotalRecibo = this.subtotal();
+            const ivaRecibo = this.iva();
+            const totalRecibo = this.total();
             
-            // 2. Llamamos al método exportarXML del servicio con los datos
-            this.carritoService.exportarXML(productosParaRecibo, totalParaRecibo, data.orderID);
+          
+            this.carritoService.exportarXML(productosParaRecibo, subtotalRecibo, ivaRecibo, totalRecibo, data.orderID);
 
-            // 3. Vaciamos el carrito
             this.carritoService.vaciar();
           },
           error: (err: any) => {
@@ -74,6 +88,4 @@ export class CarritoComponent implements OnInit {
 
   quitar(id: number) { this.carritoService.quitar(id); }
   vaciar() { this.carritoService.vaciar(); }
-
-  
 }

@@ -39,6 +39,18 @@
 
   @if (productosConCantidad().length > 0) {
     <div class="carrito-resumen">
+      <h3 class="resumen-titulo">Resumen del Pedido</h3>
+
+      <div class="resumen-linea">
+        <span>Subtotal:</span>
+        <span>{{ subtotal() | currency }}</span>
+      </div>
+      
+      <div class="resumen-linea">
+        <span>IVA (16%):</span>
+        <span>{{ iva() | currency }}</span>
+      </div>
+      
       <div class="resumen-linea resumen-total">
         <strong>Total:</strong>
         <strong class="valor">{{ total() | currency }}</strong>

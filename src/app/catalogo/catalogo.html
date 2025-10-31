@@ -19,12 +19,20 @@
       </div>
       <div class="producto-info">
         <h3 class="producto-nombre">{{ product.nombre }}</h3>
-        <p class="producto-precio">${{ product.precio }}</p>
+        <p class="producto-stock" [class.agotado]="product.stock === 0">
+          @if (product.stock > 0) {
+            Disponibles: {{ product.stock }}
+          } @else {
+            Agotado
+          }
+        </p>
+        <p class="producto-precio">{{ product.precio | currency }}</p>
         <p class="producto-descripcion">{{ product.descripcion }}</p>
         
         <button 
           class="btn-agregar-carrito" 
-          (click)="agregarAlCarrito(product)">
+          (click)="agregarAlCarrito(product)"
+          [disabled]="product.stock === 0">
           🛒 Agregar al Carrito
         </button>
       </div>
